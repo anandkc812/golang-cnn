@@ -82,7 +82,7 @@ func Forward_template( dL *denseLayer) {
 
 //y = f(w*x + b) //(Learn w, and b, with f linear or non-linear activation function)
 
-func Forward( input, weights, biases *mat64.Dense, output *mat64.Dense) {
+func Forward( input, weights, biases *mat64.Dense, output *mat64.Dense, fn func(v float64) float64) {
 
 	//var local *mat64.Dense 
 	//var local mat.Dense 
@@ -105,12 +105,16 @@ func Forward( input, weights, biases *mat64.Dense, output *mat64.Dense) {
 	
 	r3, c3 := output.Dims()
 	
-
 	
 	fmt.Println("Output Dims:", r3, c3)
 	
-	
 	output.Add(output, biases)
+
+	// Apply non-linear activation function
+	output.Apply(func(r, c int, v float64) float64 {
+  
+		return fn(v)
+      }, output)
 
 }
 
@@ -173,14 +177,11 @@ func test_1() {
 	dLHidden      := newDenseLayer( "Hidden Layer ", makeDense[1], makeDense[2], nil, nil)
 	
 
+	Forward(input,dL_InputLayer.weights, dL_InputLayer.biases, dL_InputLayer.output, dL_InputLayer.ActivationFunc)  
 	
-	
-	Forward(input,dL_InputLayer.weights, dL_InputLayer.biases, dL_InputLayer.output)  
-	
-
 	dLHidden.input = dL_InputLayer.output
 	
-	Forward(dLHidden.input,dLHidden.weights, dLHidden.biases, output)  
+	Forward(dLHidden.input,dLHidden.weights, dLHidden.biases, output,  dL_InputLayer.ActivationFunc)  
 
 	fmt.Println(output)
 	
