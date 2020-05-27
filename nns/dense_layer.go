@@ -30,7 +30,7 @@ type denseLayer struct {
 		
 }
 
-func     newDenseLayer(layername string, NumInputs int , NumOutputs int, weights []float64) denseLayer {
+func     newDenseLayer(layername string, NumInputs int , NumOutputs int, weights []float64, biases []float64) denseLayer {
 
 
 	var dlayer denseLayer
@@ -47,6 +47,13 @@ func     newDenseLayer(layername string, NumInputs int , NumOutputs int, weights
 	
 		fmt.Println("Input weights null, fill with Random")
 		fillRand(dlayer.weights)
+	
+	}
+	
+	if biases == nil {
+	
+		fmt.Println("Input Biases nill, fill with Random")
+		fillRand(dlayer.biases)
 	
 	}
 	
@@ -73,27 +80,38 @@ func Forward_template( dL *denseLayer) {
 	
 }
 
+//y = f(w*x + b) //(Learn w, and b, with f linear or non-linear activation function)
+
 func Forward( input, weights, biases *mat64.Dense, output *mat64.Dense) {
 
 	//var local *mat64.Dense 
 	//var local mat.Dense 
 
-	r, c := input.Dims()
-	
-	fmt.Println("Input Dims:", r, c)
+	r1, c1 := input.Dims()
 	r2, c2 := weights.Dims()
-	fmt.Println("Weights Dims:", r2, c2)
+	r4, c4 := biases.Dims()
 	
-	output.Mul(input.T(), weights)
+	fmt.Println("Input Dims:", r1, c1)
+	fmt.Println("Weights Dims:", r2, c2)
+	fmt.Println("Biases Dims:", r4, c4)
+
+	//Avoids transposes and input vs hidden layer handling
+	if r1 == 1 {
+		output.Mul(input, weights)
+	} else {
+		output.Mul(input.T(), weights)
+	
+	}
 	
 	r3, c3 := output.Dims()
-	fmt.Println("Output Dims:", r3, c3)
 	
 
-	//output = local
-	//TODO
-	//output.Add(local, biases)
 	
+	fmt.Println("Output Dims:", r3, c3)
+	
+	
+	output.Add(output, biases)
+
 }
 
 func fillRand( x *mat64.Dense) {
@@ -118,9 +136,9 @@ func NewDense() {
 
 	makeDense := [3]int{10,12,3}
 	
-	dL_InputLayer := newDenseLayer( "Input Layer ", makeDense[0], makeDense[1], nil)
+	dL_InputLayer := newDenseLayer( "Input Layer ", makeDense[0], makeDense[1], nil, nil)
 
-	dLHidden := newDenseLayer( "Hidden Layer ", makeDense[1], makeDense[2], nil)
+	dLHidden := newDenseLayer( "Hidden Layer ", makeDense[1], makeDense[2], nil, nil)
 	//dLEnd    := newDenseLayer( "Input Layer ", makeDense[2], makeDense[2], nil)
 	
 	//var r, c int
@@ -151,13 +169,18 @@ func test_1() {
 	makeDense := [3]int{10,12,3}
 	
 	fmt.Println("------------TEST 1 ----------")
-	dL_InputLayer := newDenseLayer( "Input Layer ", makeDense[0], makeDense[1], nil)
-	//dLHidden      := newDenseLayer( "Hidden Layer ", makeDense[1], makeDense[2], nil)
+	dL_InputLayer := newDenseLayer( "Input Layer ", makeDense[0], makeDense[1], nil, nil)
+	dLHidden      := newDenseLayer( "Hidden Layer ", makeDense[1], makeDense[2], nil, nil)
 	
 
 	
 	
-	Forward(input,dL_InputLayer.weights, dL_InputLayer.biases, output)  
+	Forward(input,dL_InputLayer.weights, dL_InputLayer.biases, dL_InputLayer.output)  
+	
+
+	dLHidden.input = dL_InputLayer.output
+	
+	Forward(dLHidden.input,dLHidden.weights, dLHidden.biases, output)  
 
 	fmt.Println(output)
 	
