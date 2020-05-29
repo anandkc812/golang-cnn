@@ -25,7 +25,7 @@ type denseLayer struct {
 	
 	
 	ActivationFunc           func(v float64) float64
-	ActivationDerivative     func(v float64) float64
+	DActivationFunc          func(v float64) float64
 	
 		
 }
@@ -57,7 +57,9 @@ func     newDenseLayer(layername string, NumInputs int , NumOutputs int, weights
 	
 	}
 	
-	dlayer.ActivationFunc  = ActivationTanh
+	dlayer.ActivationFunc   = ActivationTanh
+	dlayer.DActivationFunc  = DActivationTanh
+	
 	return dlayer
 
 }
@@ -82,14 +84,14 @@ func Forward_template( dL *denseLayer) {
 
 //y = f(w*x + b) //(Learn w, and b, with f linear or non-linear activation function)
 
-func Forward( input, weights, biases *mat64.Dense, output *mat64.Dense, fn func(v float64) float64) {
+func Forward( input *mat64.Dense, dlayer denseLayer) {
 
 	//var local *mat64.Dense 
 	//var local mat.Dense 
 
-	r1, c1 := input.Dims()
-	r2, c2 := weights.Dims()
-	r4, c4 := biases.Dims()
+	r1, c1 := dlayer.input.Dims()
+	r2, c2 := dlayer.weights.Dims()
+	r4, c4 := dlayer.biases.Dims()
 	
 	fmt.Println("Input Dims:", r1, c1)
 	fmt.Println("Weights Dims:", r2, c2)
@@ -97,24 +99,24 @@ func Forward( input, weights, biases *mat64.Dense, output *mat64.Dense, fn func(
 
 	//Avoids transposes and input vs hidden layer handling
 	if r1 == 1 {
-		output.Mul(input, weights)
+		dlayer.output.Mul(input, dlayer.weights)
 	} else {
-		output.Mul(input.T(), weights)
+		dlayer.output.Mul(input.T(), dlayer.weights)
 	
 	}
 	
-	r3, c3 := output.Dims()
+	r3, c3 := dlayer.output.Dims()
 	
 	
 	fmt.Println("Output Dims:", r3, c3)
 	
-	output.Add(output, biases)
+	dlayer.output.Add(dlayer.output, dlayer.biases)
 
 	// Apply non-linear activation function
-	output.Apply(func(r, c int, v float64) float64 {
+	dlayer.output.Apply(func(r, c int, v float64) float64 {
   
-		return fn(v)
-      }, output)
+		return dlayer.ActivationFunc(v)
+      }, dlayer.output)
 
 }
 
@@ -177,11 +179,10 @@ func test_1() {
 	dLHidden      := newDenseLayer( "Hidden Layer ", makeDense[1], makeDense[2], nil, nil)
 	
 
-	Forward(input,dL_InputLayer.weights, dL_InputLayer.biases, dL_InputLayer.output, dL_InputLayer.ActivationFunc)  
-	
+	Forward(input,dL_InputLayer)  
 	dLHidden.input = dL_InputLayer.output
 	
-	Forward(dLHidden.input,dLHidden.weights, dLHidden.biases, output,  dL_InputLayer.ActivationFunc)  
+	Forward(dLHidden.input,dLHidden)  
 
 	fmt.Println(output)
 	
