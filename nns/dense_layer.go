@@ -134,8 +134,28 @@ func fillRand( x *mat64.Dense) {
 
 }
 
-func Backprop( input *mat64.Dense, dlayer denseLayer) {
+func Backprop(  curr_layer, next_layer denseLayer) {
 
+	r1, c1 := next_layer.weights.Dims()
+	r2, c2 := next_layer.deltas.Dims()
+	fmt.Println("---------------------------")
+	fmt.Println("Backprop:: next layer weights dims :", r1,c1)
+	fmt.Println("Backprop:: next layer deltas  dims :", r2,c2)
+
+	var tem_deltas mat64.Dense
+	
+	tem_deltas.Mul(next_layer.weights, next_layer.deltas.T())
+
+	//curr_layer.deltas = tem_deltas.T()
+	
+	r3, c3 := tem_deltas.Dims()
+	r4, c4 := curr_layer.derivatives.Dims()
+
+
+	fmt.Println("Backprop:: curr_layer deltas dims :", r3,c3)
+	fmt.Println("Backprop:: curr layer deriv  dims :", r4,c4)
+	
+	curr_layer.deltas.MulElem(tem_deltas.T(), curr_layer.derivatives)
 
 }
 
@@ -146,16 +166,17 @@ func OutputDeltaCalc( groundtruth_values *mat64.Dense, curr_layer denseLayer) {
 	r1, c1 := curr_layer.output.Dims()
 	r2, c2 := groundtruth_values.Dims()
 
-	fmt.Println("Output dims", r1,c1)
-	fmt.Println("groundtruth_values dims", r2,c2)
+	fmt.Println("OutputDeltaCalc:: Output dims", r1,c1)
+	fmt.Println("OutputDeltaCalc:: groundtruth_values dims", r2,c2)
 	
 
 	curr_layer.deltas.Sub(curr_layer.output, groundtruth_values.T())
 	
 	r3, c3 := curr_layer.deltas.Dims()
-	fmt.Println("deltas dims", r3,c3)
+	fmt.Println("OutputDeltaCalc:: deltas dims", r3,c3)
 	r4, c4 := curr_layer.derivatives.Dims()
-	fmt.Println("derivatives dims", r4,c4)
+	fmt.Println("OutputDeltaCalc:: derivatives dims", r4,c4)
+	
 	
 	
 	
@@ -220,6 +241,8 @@ func test_1() {
 
 
 	OutputDeltaCalc(output, dLHidden)
+
+	Backprop(dL_InputLayer, dLHidden)
 	
 	fmt.Println(output)
 	
