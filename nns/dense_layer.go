@@ -20,6 +20,8 @@ type denseLayer struct {
 	biases  *mat64.Dense
 	
 	weights *mat64.Dense
+	deltas  *mat64.Dense
+	derivatives *mat64.Dense
 	
 	denseLayerName string
 	
@@ -38,10 +40,16 @@ func     newDenseLayer(layername string, NumInputs int , NumOutputs int, weights
 	dlayer.denseLayerName = layername
 	dlayer.input  = &mat64.Dense{}
 	dlayer.output = &mat64.Dense{}  //Populated during Forward
+
+	dlayer.deltas      = &mat64.Dense{}  //Populated during Forward
+	dlayer.derivatives = &mat64.Dense{}  //Output x batch (batch ==1 )
+
 	
 	dlayer.weights = mat64.NewDense(NumInputs, NumOutputs, weights)
 
 	dlayer.biases = mat64.NewDense(1, NumOutputs,nil)  
+	
+	
 	
 	if weights == nil {
 	
@@ -64,23 +72,6 @@ func     newDenseLayer(layername string, NumInputs int , NumOutputs int, weights
 
 }
 
-func Forward_template( dL *denseLayer) {
-
-	var local *mat64.Dense 
-	//var local mat.Dense 
-
-	input   := dL.input
-	weights := dL.weights
-	
-	local.Mul(input, weights)
-	
-	
-
-	dL.output = local
-	//TODO
-	//output.Add(local, biases)
-	
-}
 
 //y = f(w*x + b) //(Learn w, and b, with f linear or non-linear activation function)
 
@@ -113,9 +104,14 @@ func Forward( input *mat64.Dense, dlayer denseLayer) {
 	dlayer.output.Add(dlayer.output, dlayer.biases)
 
 	// Apply non-linear activation function
-	dlayer.output.Apply(func(r, c int, v float64) float64 {
+	dlayer.derivatives.Apply(func(r, c int, v float64) float64 {
+		return dlayer.DActivationFunc(v)
+      }, dlayer.output)
+	
+	
   
-		return dlayer.ActivationFunc(v)
+	dlayer.output.Apply(func(r, c int, v float64) float64 {
+  		return dlayer.ActivationFunc(v)
       }, dlayer.output)
 
 }
