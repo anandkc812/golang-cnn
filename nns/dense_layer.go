@@ -77,8 +77,6 @@ func     newDenseLayer(layername string, NumInputs int , NumOutputs int, weights
 
 func Forward( input *mat64.Dense, dlayer denseLayer) {
 
-	//var local *mat64.Dense 
-	//var local mat.Dense 
 
 	r1, c1 := dlayer.input.Dims()
 	r2, c2 := dlayer.weights.Dims()
@@ -243,6 +241,10 @@ func test_1() {
 	OutputDeltaCalc(output, dLHidden)
 
 	Backprop(dL_InputLayer, dLHidden)
+	
+	mse_err := mse(output, dLHidden.output)
+	
+	fmt.Println("Mse error ", mse_err)
 	
 	fmt.Println(output)
 	
