@@ -10,9 +10,6 @@ import (
  )
 
 
-
-
-
 type denseLayer struct {
 
 	input   *mat64.Dense
@@ -175,14 +172,44 @@ func OutputDeltaCalc( groundtruth_values *mat64.Dense, curr_layer denseLayer) {
 	r4, c4 := curr_layer.derivatives.Dims()
 	fmt.Println("OutputDeltaCalc:: derivatives dims", r4,c4)
 	
-	
-	
-	
-	
-	
+
 	curr_layer.deltas.MulElem(curr_layer.deltas, curr_layer.derivatives) 
 
 }
+
+
+func Update(curr_layer denseLayer, lr float64) {
+
+	deltas := &mat64.Dense{}
+	
+	r1,c1 := curr_layer.deltas.Dims()
+	fmt.Println("Update, Deltas Dims", r1,c1)
+	
+	r2,c2 := curr_layer.input.Dims()
+	fmt.Println("Update, input Dims", r2,c2)
+	
+	if c2 == 1 {
+		deltas.Mul(curr_layer.deltas.T() , curr_layer.input.T())
+	} else {
+		deltas.Mul(curr_layer.deltas.T() , curr_layer.input)
+	}
+	
+	//TODO Decay 
+	
+	fmt.Println("Mul Done - next scale")
+	r,c := deltas.Dims()
+	
+	fmt.Println("Update, Local Deltas Dims", r,c)
+
+	deltas.Scale(lr, deltas)
+	
+	
+	curr_layer.weights.Sub(curr_layer.weights, deltas.T())
+	
+
+}
+
+
 
 
 func NewDense() {
@@ -232,6 +259,8 @@ func test_1() {
 	dLHidden      := newDenseLayer( "Hidden Layer ", makeDense[1], makeDense[2], nil, nil)
 	
 
+	dL_InputLayer.input = input
+	
 	Forward(input,dL_InputLayer)  
 	dLHidden.input = dL_InputLayer.output
 	
@@ -239,10 +268,13 @@ func test_1() {
 
 
 	OutputDeltaCalc(output, dLHidden)
+	Update(dLHidden, 0.5)
 
-	Backprop(dL_InputLayer, dLHidden)
-	
+	Backprop( dL_InputLayer, dLHidden)
+
 	mse_err := mse(output, dLHidden.output)
+	
+	Update(dL_InputLayer, 0.5)
 	
 	fmt.Println("Mse error ", mse_err)
 	
