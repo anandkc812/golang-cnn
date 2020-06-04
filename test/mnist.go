@@ -71,7 +71,7 @@ func main()  {
 	for epoch := 0; epoch < max_epochs; epoch++ {
 	
 		t_start := time.Now()
-		
+		mse_err =0.0
 		for b:= 0; b < num_batches; b++ {
 		
 			start := b*batch_size
@@ -124,18 +124,23 @@ func main()  {
 			nns.Forward(yout_mat64,dLHidden)  
 
 			nns.OutputDeltaCalc(y_mat64, dLHidden)
-			nns.Update(dLHidden, 0.5)
+			nns.Update(dLHidden, 0.01)
 
 			nns.Backprop( dL_InputLayer, dLHidden)
 
 			yout_mat64 = nns.GetOutput(dLHidden)
 			
-			mse_err = nns.Mse(y_mat64, yout_mat64)
+			mse_err += nns.Mse(y_mat64, yout_mat64)
 			
-			nns.Update(dL_InputLayer, 0.2)
+			nns.Update(dL_InputLayer, 0.01)
 			
-			if b%100 == 0 {
-				fmt.Println("Mse error ", mse_err)
+			if b%1000 == 0 {
+			
+				
+				fmt.Println("Mse error :", mse_err, b,epoch)
+				fmt.Println("expected:", y_mat64)
+				fmt.Println("Achieved:", yout_mat64)
+				mse_err =0.0
 			}
 	
 
