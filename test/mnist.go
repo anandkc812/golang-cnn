@@ -59,7 +59,7 @@ func main()  {
 	var xVal, yVal tensor.Tensor
 	var x_mat64, y_mat64, yout_mat64 *mat64.Dense
 	
-	var r3,c3, r4, c4 int
+	var r3,c3, r4, c4, accuracy int
 
 	var mse_err float64
 	
@@ -72,6 +72,7 @@ func main()  {
 	
 		t_start := time.Now()
 		mse_err =0.0
+		accuracy=0
 		for b:= 0; b < num_batches; b++ {
 		
 			start := b*batch_size
@@ -134,13 +135,21 @@ func main()  {
 			
 			nns.Update(dL_InputLayer, 0.01)
 			
+			//tmp_mat64 = yout_mat64.T().(mat64.Dense)
+			acc, _ := nns.CheckAccuracy(y_mat64, yout_mat64)
+			accuracy +=acc
+			
 			if b%1000 == 0 {
 			
 				
 				fmt.Println("Mse error :", mse_err, b,epoch)
+				fmt.Println("Accuracy : Percentage :", 100*float64(accuracy)/float64(1000))
 				fmt.Println("expected:", y_mat64)
 				fmt.Println("Achieved:", yout_mat64)
-				mse_err =0.0
+				mse_err  =0.0
+				accuracy =0.0
+				
+				
 			}
 	
 
