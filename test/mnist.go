@@ -8,6 +8,7 @@ import (
 	//"gorgonia.org/gorgonia"
 	"gorgonia.org/tensor"
 	"time"
+	"../nns"
 	"github.com/gonum/matrix/mat64"
 	
 )
@@ -48,19 +49,29 @@ func main()  {
 	batch_size := 1
 	
 	num_batches := num_samples/batch_size
+
+
 	
 	if err := inputs.Reshape(num_samples, 1, 28, 28); err != nil {
 		log.Fatal(err)
 	}	
 	
-	x := &mat64.Dense{}
-	y := &mat64.Dense{}
 	var xVal, yVal tensor.Tensor
+	var x_mat64, y_mat64, yout_mat64 *mat64.Dense
 	
+	var r3,c3, r4, c4 int
+
+	var mse_err float64
+	
+	makeDense := [3]int{28*28,80,10}
+	dL_InputLayer := nns.NewDenseLayer( "Input Layer ", makeDense[0], makeDense[1], nil, nil)
+	dLHidden      := nns.NewDenseLayer( "Hidden Layer ", makeDense[1], makeDense[2], nil, nil)
+
 	
 	for epoch := 0; epoch < max_epochs; epoch++ {
 	
-	
+		t_start := time.Now()
+		
 		for b:= 0; b < num_batches; b++ {
 		
 			start := b*batch_size
@@ -76,6 +87,7 @@ func main()  {
 				end = num_samples
 			}
 			
+		
 			
 			if xVal, err = inputs.Slice(sli{start, end}); err != nil {
 				log.Fatal("Unable to slice x")
@@ -89,34 +101,57 @@ func main()  {
 				log.Fatalf("Unable to reshape epoch", epoch, err )
 				
 			}
+			//data := xVal.Data()
+			x_mat64 = mat64.NewDense(28*28, 1, xVal.Data().([]float64))
+			y_mat64 = mat64.NewDense(10, 1 , yVal.Data().([]float64))
 			
-			//gorgonia.Let(x, xVal)
-			//gorgonia.Let(y, yVal)
+			r3,c3 = x_mat64.Dims()
+			r4,c4 = y_mat64.Dims()
 			
 			
-			//x.bind(xVal)
-			//y.bind(yVal)
+			//fmt.Println("Input dims: {} {}, output dims {} {}", r3, c3, r4, c4)
+			
+			r3, c3 = nns.SetInput(x_mat64, &dL_InputLayer)
+			
+			
+			
+			nns.Forward(x_mat64,dL_InputLayer)  
+
+			nns.LinkLayers(&dL_InputLayer,&dLHidden)
+			
+			
+			yout_mat64 = nns.GetOutput(dL_InputLayer)
+			nns.Forward(yout_mat64,dLHidden)  
+
+			nns.OutputDeltaCalc(y_mat64, dLHidden)
+			nns.Update(dLHidden, 0.5)
+
+			nns.Backprop( dL_InputLayer, dLHidden)
+
+			yout_mat64 = nns.GetOutput(dLHidden)
+			
+			mse_err = nns.Mse(y_mat64, yout_mat64)
+			
+			nns.Update(dL_InputLayer, 0.2)
+			
+			if b%100 == 0 {
+				fmt.Println("Mse error ", mse_err)
+			}
+	
+
 		
 		}
 	
-	
+		t_end := time.Now()
+		fmt.Println("Time taken for epoch {}: time {} mse ", epoch, t_end.Sub(t_start), mse_err)
 	}
 	
 	//Template code to convert Tensor to Dense
-	r1 ,c1 := x.Dims()
-	r2, c2 := y.Dims()
 	xvaldims :=xVal.Shape()
 	yvaldims :=yVal.Shape()
 	
-	data := xVal.Data()
-	
-	x_mat64 := mat64.NewDense(28, 28, data.([]float64))
-		
-	r3,c3 := x_mat64.Dims()
-	
-	fmt.Println("Mat64 Dense Converted :", r3,c3)
-	
-	fmt.Println(" x size {} {}, y size {} {} ", r1, c1, r2, c2)
+
+	fmt.Println("Mat64 Dense Converted in Loop  :", r3,c3 , r4, c4 )
 	fmt.Println(" xVal size {}{}, yVal size{}{}", xvaldims, yvaldims)
 
 	
