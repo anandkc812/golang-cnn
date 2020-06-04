@@ -138,11 +138,12 @@ func fillRand( x *mat64.Dense) {
 
 	r,c := x.Dims()
 	
+	norm := float64(r*c)
 	for i:=0; i < r; i++ {
 	
 		for j:=0; j < c; j++ {
 		
-			x.Set(i, j, rand.NormFloat64())
+			x.Set(i, j, rand.NormFloat64()/norm)
 			//fmt.Println(rand.NormFloat64())
 		
 		}
