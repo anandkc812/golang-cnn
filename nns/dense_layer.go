@@ -10,6 +10,8 @@ import (
  )
 
 
+const Debug=0
+ 
 type denseLayer struct {
 
 	input   *mat64.Dense
@@ -29,7 +31,7 @@ type denseLayer struct {
 		
 }
 
-func     newDenseLayer(layername string, NumInputs int , NumOutputs int, weights []float64, biases []float64) denseLayer {
+func     NewDenseLayer(layername string, NumInputs int , NumOutputs int, weights []float64, biases []float64) denseLayer {
 
 
 	var dlayer denseLayer
@@ -69,6 +71,25 @@ func     newDenseLayer(layername string, NumInputs int , NumOutputs int, weights
 
 }
 
+func SetInput(input *mat64.Dense, dlayer *denseLayer) (int, int) {
+
+	dlayer.input = input
+	
+	r,c := dlayer.input.Dims()
+	//fmt.Println("Input Dims :", r,c)
+	return r, c
+}
+
+func LinkLayers(curr_layer , next_layer *denseLayer) {
+
+	next_layer.input = curr_layer.output
+
+}
+
+func GetOutput(curr_layer denseLayer) *mat64.Dense {
+
+	return curr_layer.output
+}
 
 //y = f(w*x + b) //(Learn w, and b, with f linear or non-linear activation function)
 
@@ -79,10 +100,6 @@ func Forward( input *mat64.Dense, dlayer denseLayer) {
 	r2, c2 := dlayer.weights.Dims()
 	r4, c4 := dlayer.biases.Dims()
 	
-	fmt.Println("Input Dims:", r1, c1)
-	fmt.Println("Weights Dims:", r2, c2)
-	fmt.Println("Biases Dims:", r4, c4)
-
 	//Avoids transposes and input vs hidden layer handling
 	if r1 == 1 {
 		dlayer.output.Mul(input, dlayer.weights)
@@ -93,8 +110,13 @@ func Forward( input *mat64.Dense, dlayer denseLayer) {
 	
 	r3, c3 := dlayer.output.Dims()
 	
+	if Debug == 1 {
+		fmt.Println("Input Dims:", r1, c1)
+		fmt.Println("Weights Dims:", r2, c2)
+		fmt.Println("Biases Dims:", r4, c4)
+		fmt.Println("Output Dims:", r3, c3)
+	}
 	
-	fmt.Println("Output Dims:", r3, c3)
 	
 	dlayer.output.Add(dlayer.output, dlayer.biases)
 
@@ -133,9 +155,6 @@ func Backprop(  curr_layer, next_layer denseLayer) {
 
 	r1, c1 := next_layer.weights.Dims()
 	r2, c2 := next_layer.deltas.Dims()
-	fmt.Println("---------------------------")
-	fmt.Println("Backprop:: next layer weights dims :", r1,c1)
-	fmt.Println("Backprop:: next layer deltas  dims :", r2,c2)
 
 	var tem_deltas mat64.Dense
 	
@@ -146,10 +165,13 @@ func Backprop(  curr_layer, next_layer denseLayer) {
 	r3, c3 := tem_deltas.Dims()
 	r4, c4 := curr_layer.derivatives.Dims()
 
-
-	fmt.Println("Backprop:: curr_layer deltas dims :", r3,c3)
-	fmt.Println("Backprop:: curr layer deriv  dims :", r4,c4)
-	
+	if Debug==1 {
+		fmt.Println("---------------------------")
+		fmt.Println("Backprop:: next layer weights dims :", r1,c1)
+		fmt.Println("Backprop:: next layer deltas  dims :", r2,c2)
+		fmt.Println("Backprop:: curr_layer deltas dims :", r3,c3)
+		fmt.Println("Backprop:: curr layer deriv  dims :", r4,c4)
+	}
 	curr_layer.deltas.MulElem(tem_deltas.T(), curr_layer.derivatives)
 
 }
@@ -161,17 +183,18 @@ func OutputDeltaCalc( groundtruth_values *mat64.Dense, curr_layer denseLayer) {
 	r1, c1 := curr_layer.output.Dims()
 	r2, c2 := groundtruth_values.Dims()
 
-	fmt.Println("OutputDeltaCalc:: Output dims", r1,c1)
-	fmt.Println("OutputDeltaCalc:: groundtruth_values dims", r2,c2)
 	
 
 	curr_layer.deltas.Sub(curr_layer.output, groundtruth_values.T())
-	
-	r3, c3 := curr_layer.deltas.Dims()
-	fmt.Println("OutputDeltaCalc:: deltas dims", r3,c3)
-	r4, c4 := curr_layer.derivatives.Dims()
-	fmt.Println("OutputDeltaCalc:: derivatives dims", r4,c4)
-	
+
+	if Debug==1 {
+		fmt.Println("OutputDeltaCalc:: Output dims", r1,c1)
+		fmt.Println("OutputDeltaCalc:: groundtruth_values dims", r2,c2)
+		r3, c3 := curr_layer.deltas.Dims()
+		fmt.Println("OutputDeltaCalc:: deltas dims", r3,c3)
+		r4, c4 := curr_layer.derivatives.Dims()
+		fmt.Println("OutputDeltaCalc:: derivatives dims", r4,c4)
+	}
 
 	curr_layer.deltas.MulElem(curr_layer.deltas, curr_layer.derivatives) 
 
@@ -183,10 +206,8 @@ func Update(curr_layer denseLayer, lr float64) {
 	deltas := &mat64.Dense{}
 	
 	r1,c1 := curr_layer.deltas.Dims()
-	fmt.Println("Update, Deltas Dims", r1,c1)
 	
 	r2,c2 := curr_layer.input.Dims()
-	fmt.Println("Update, input Dims", r2,c2)
 	
 	if c2 == 1 {
 		deltas.Mul(curr_layer.deltas.T() , curr_layer.input.T())
@@ -196,11 +217,14 @@ func Update(curr_layer denseLayer, lr float64) {
 	
 	//TODO Decay 
 	
-	fmt.Println("Mul Done - next scale")
 	r,c := deltas.Dims()
-	
-	fmt.Println("Update, Local Deltas Dims", r,c)
 
+	if Debug==1 {
+		fmt.Println("Mul Done - next scale")
+		fmt.Println("Update, Deltas Dims", r1,c1)
+		fmt.Println("Update, Local Deltas Dims", r,c)
+		fmt.Println("Update, input Dims", r2,c2)
+	}
 	deltas.Scale(lr, deltas)
 	
 	
@@ -216,10 +240,11 @@ func NewDense() {
 
 	makeDense := [3]int{10,12,3}
 	
-	dL_InputLayer := newDenseLayer( "Input Layer ", makeDense[0], makeDense[1], nil, nil)
+	
+	dL_InputLayer := NewDenseLayer( "Input Layer ", makeDense[0], makeDense[1], nil, nil)
 
-	dLHidden := newDenseLayer( "Hidden Layer ", makeDense[1], makeDense[2], nil, nil)
-	//dLEnd    := newDenseLayer( "Input Layer ", makeDense[2], makeDense[2], nil)
+	dLHidden := NewDenseLayer( "Hidden Layer ", makeDense[1], makeDense[2], nil, nil)
+	//dLEnd    := NewDenseLayer( "Input Layer ", makeDense[2], makeDense[2], nil)
 	
 	//var r, c int
 	r1, c1 := dL_InputLayer.weights.Dims()
@@ -232,7 +257,7 @@ func NewDense() {
 	fmt.Println("NewDense init", dL_InputLayer)
 	
 	
-	test_1()
+	//test_1()
 	
 	//fillRand(dL_InputLayer.weights)
 	//fmt.Println(dL_InputLayer.weights)
@@ -255,8 +280,8 @@ func test_1() {
 	makeDense := [3]int{10,12,3}
 	
 	fmt.Println("------------TEST 1 ----------")
-	dL_InputLayer := newDenseLayer( "Input Layer ", makeDense[0], makeDense[1], nil, nil)
-	dLHidden      := newDenseLayer( "Hidden Layer ", makeDense[1], makeDense[2], nil, nil)
+	dL_InputLayer := NewDenseLayer( "Input Layer ", makeDense[0], makeDense[1], nil, nil)
+	dLHidden      := NewDenseLayer( "Hidden Layer ", makeDense[1], makeDense[2], nil, nil)
 	
 
 	dL_InputLayer.input = input
@@ -272,7 +297,7 @@ func test_1() {
 
 	Backprop( dL_InputLayer, dLHidden)
 
-	mse_err := mse(output, dLHidden.output)
+	mse_err := Mse(output, dLHidden.output)
 	
 	Update(dL_InputLayer, 0.5)
 	
