@@ -64,10 +64,49 @@ func     NewDenseLayer(layername string, NumInputs int , NumOutputs int, weights
 	
 	}
 	
-	dlayer.ActivationFunc   = ActivationTanh
-	dlayer.DActivationFunc  = DActivationTanh
+	
+	SetActivation(&dlayer, "sigmoid")
+
+	fmt.Println("After Set : ActivationFunc :", dlayer.ActivationFunc)
 	
 	return dlayer
+
+}
+
+func SetActivation(dlayer *denseLayer, actv string) {
+
+
+	fmt.Println("Switch  : ", actv)
+	
+	switch actv {
+	
+	
+		//case "ReLU": //--TBD
+		case "relu":
+			
+			fmt.Println("Set Activation")
+			dlayer.ActivationFunc   = ActivationReLU
+			dlayer.DActivationFunc  = DActivationReLU
+			break
+				
+		//case "Tanh":
+		case "tanh":
+			dlayer.ActivationFunc   = ActivationTanh
+			dlayer.DActivationFunc  = ActivationTanh
+			break
+	
+		//case "Sigmoid":
+		case "sigmoid":
+			dlayer.ActivationFunc   = ActivationSigmoid
+			dlayer.DActivationFunc  = DActivationSigmoid
+			break
+	
+		default:
+			fmt.Println("Default Set Activation")
+			dlayer.ActivationFunc   = ActivationSigmoid
+			dlayer.DActivationFunc  = DActivationSigmoid
+			break
+	}
 
 }
 
