@@ -44,7 +44,7 @@ func main()  {
 
 	num_samples    := inputs.Shape()[0]
 	target_sample  := targets.Shape()[0]
-	max_epochs := 10
+	max_epochs := 30
 	
 	batch_size := 1
 	
@@ -125,7 +125,7 @@ func main()  {
 			nns.Forward(yout_mat64,dLHidden)  
 
 			nns.OutputDeltaCalc(y_mat64, dLHidden)
-			nns.Update(dLHidden, 0.01)
+			nns.Update(dLHidden, 0.0001)
 
 			nns.Backprop( dL_InputLayer, dLHidden)
 
@@ -133,7 +133,7 @@ func main()  {
 			
 			mse_err += nns.Mse(y_mat64, yout_mat64)
 			
-			nns.Update(dL_InputLayer, 0.01)
+			nns.Update(dL_InputLayer, 0.0001)
 			
 			//tmp_mat64 = yout_mat64.T().(mat64.Dense)
 			acc, _ := nns.CheckAccuracy(y_mat64, yout_mat64)
