@@ -10,7 +10,7 @@ import (
 )
 
 
-func  mse(actual , estimate *mat64.Dense)   float64 {
+func  Mse(actual , estimate *mat64.Dense)   float64 {
 
 	tmp := &mat64.Dense{}
 	tmp2 := &mat64.Dense{}

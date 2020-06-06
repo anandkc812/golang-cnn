@@ -2,6 +2,7 @@ package nns
 
 import (
     "fmt"
+	"log"
     //"time"
     //"math"
 	//"gonum.org/v1/gonum/mat"
@@ -23,6 +24,7 @@ type denseLayer struct {
 	derivatives *mat64.Dense
 	
 	denseLayerName string
+	activationName string
 	
 	
 	ActivationFunc           func(v float64) float64
@@ -31,7 +33,23 @@ type denseLayer struct {
 		
 }
 
-func     NewDenseLayer(layername string, NumInputs int , NumOutputs int, weights []float64, biases []float64) denseLayer {
+func LogMlpLayer(dlayer *denseLayer) {
+
+	log.Printf(" MLP Layer          : %s",  dlayer.denseLayerName)
+	log.Printf(" Activation         : %s",  dlayer.activationName)
+	
+	r, c := dlayer.input.Dims()
+	log.Printf(" Nodes  (inputs )   : %d  x %d", r, c)
+
+	r, c = dlayer.output.Dims()
+	log.Printf(" Nodes  (outputs)   : %d  x %d", r, c)
+	
+	r, c = dlayer.weights.Dims()
+	log.Printf(" Weights Dims       : %d  x %d", r ,c )
+	
+}
+
+func     NewDenseLayer(layername, actv string, NumInputs int , NumOutputs int, weights []float64, biases []float64) denseLayer {
 
 
 	var dlayer denseLayer
@@ -65,7 +83,9 @@ func     NewDenseLayer(layername string, NumInputs int , NumOutputs int, weights
 	}
 	
 	
-	SetActivation(&dlayer, "lrelu")
+	//dlayer.activationName= "lrelu"
+	
+	SetActivation(&dlayer, actv)
 
 	fmt.Println("After Set : ActivationFunc :", dlayer.ActivationFunc)
 	
@@ -73,10 +93,18 @@ func     NewDenseLayer(layername string, NumInputs int , NumOutputs int, weights
 
 }
 
+
+
+func GetActivation(dlayer *denseLayer) string {
+
+	return dlayer.activationName
+}
+
 func SetActivation(dlayer *denseLayer, actv string) {
 
 
-	fmt.Println("Switch  : ", actv)
+	fmt.Println("SetActivation  : ", actv)
+	dlayer.activationName= actv
 	
 	switch actv {
 	
