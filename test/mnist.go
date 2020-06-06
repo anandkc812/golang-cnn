@@ -59,14 +59,14 @@ func main()  {
 	var xVal, yVal tensor.Tensor
 	var x_mat64, y_mat64, yout_mat64 *mat64.Dense
 	
-	var r3,c3, r4, c4, accuracy int
+	var accuracy int
 
-	var mse_err float64
+	var mse_err, LearningRate float64
 	
 	makeDense := [3]int{28*28,80,10}
-	dL_InputLayer := nns.NewDenseLayer( "Input Layer ", makeDense[0], makeDense[1], nil, nil)
-	dLHidden      := nns.NewDenseLayer( "Hidden Layer ", makeDense[1], makeDense[2], nil, nil)
-
+	dL_InputLayer := nns.NewDenseLayer( "Input Layer ", "lrelu", makeDense[0], makeDense[1], nil, nil)
+	dLHidden      := nns.NewDenseLayer( "Hidden Layer ","lrelu", makeDense[1], makeDense[2], nil, nil)
+	LearningRate   = 0.0001
 	
 	for epoch := 0; epoch < max_epochs; epoch++ {
 	
@@ -106,13 +106,11 @@ func main()  {
 			x_mat64 = mat64.NewDense(28*28, 1, xVal.Data().([]float64))
 			y_mat64 = mat64.NewDense(10, 1 , yVal.Data().([]float64))
 			
-			r3,c3 = x_mat64.Dims()
-			r4,c4 = y_mat64.Dims()
-			
-			
+			//r3,c3 = x_mat64.Dims()
+			//r4,c4 = y_mat64.Dims()
 			//fmt.Println("Input dims: {} {}, output dims {} {}", r3, c3, r4, c4)
 			
-			r3, c3 = nns.SetInput(x_mat64, &dL_InputLayer)
+			nns.SetInput(x_mat64, &dL_InputLayer)
 			
 			
 			
@@ -125,7 +123,7 @@ func main()  {
 			nns.Forward(yout_mat64,dLHidden)  
 
 			nns.OutputDeltaCalc(y_mat64, dLHidden)
-			nns.Update(dLHidden, 0.0001)
+			nns.Update(dLHidden, LearningRate)
 
 			nns.Backprop( dL_InputLayer, dLHidden)
 
@@ -133,19 +131,18 @@ func main()  {
 			
 			mse_err += nns.Mse(y_mat64, yout_mat64)
 			
-			nns.Update(dL_InputLayer, 0.0001)
+			nns.Update(dL_InputLayer, LearningRate)
 			
 			//tmp_mat64 = yout_mat64.T().(mat64.Dense)
 			acc, _ := nns.CheckAccuracy(y_mat64, yout_mat64)
 			accuracy +=acc
 			
 			if b%1000 == 0 {
-			
 				
-				fmt.Println("Mse error :", mse_err, b,epoch)
-				fmt.Println("Accuracy : Percentage :", 100*float64(accuracy)/float64(1000))
-				fmt.Println("expected:", y_mat64)
-				fmt.Println("Achieved:", yout_mat64)
+				log.Printf("Mse error : %f, Samples : %d, epoc :%d: Accuracy : %f ", mse_err, end,epoch, 100*float64(accuracy)/float64(1000))
+				
+				//fmt.Println("expected:", y_mat64)
+				//fmt.Println("Achieved:", yout_mat64)
 				mse_err  =0.0
 				accuracy =0.0
 				
@@ -157,22 +154,19 @@ func main()  {
 		}
 	
 		t_end := time.Now()
-		fmt.Println("Time taken for epoch {}: time {} mse ", epoch, t_end.Sub(t_start), mse_err)
+		log.Printf("Epoch %d: Time taken : %s :  MSE err: %f", epoch,  t_end.Sub(t_start), mse_err)
 	}
 	
-	//Template code to convert Tensor to Dense
-	xvaldims :=xVal.Shape()
-	yvaldims :=yVal.Shape()
 	
-
-	fmt.Println("Mat64 Dense Converted in Loop  :", r3,c3 , r4, c4 )
-	fmt.Println(" xVal size {}{}, yVal size{}{}", xvaldims, yvaldims)
-
 	
 	end := time.Now()
 	
 	fmt.Println("Time taken : ", end.Sub(start))
 	fmt.Println(" MNIST sample size : ", num_samples, target_sample)
+	
+	nns.LogMlpLayer(&dL_InputLayer)
+	nns.LogMlpLayer(&dLHidden)
+	log.Printf("Learning rate : %f", LearningRate)
 	
 
 }
