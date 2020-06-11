@@ -128,7 +128,7 @@ func SetActivation(dlayer *denseLayer, actv string) {
 		case "tanh":
 			fmt.Println("Set Activation Tanh")
 			dlayer.ActivationFunc   = ActivationTanh
-			dlayer.DActivationFunc  = ActivationTanh
+			dlayer.DActivationFunc  = DActivationTanh
 			break
 	
 		//case "Sigmoid":
