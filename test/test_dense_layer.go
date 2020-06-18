@@ -68,8 +68,8 @@ func test_1() {
 	makeDense := [3]int{10,12,3}
 	
 	fmt.Println("------------TEST 1 ----------")
-	dL_InputLayer := nns.NewDenseLayer( "Input Layer ", makeDense[0], makeDense[1], nil, nil)
-	dLHidden      := nns.NewDenseLayer( "Hidden Layer ", makeDense[1], makeDense[2], nil, nil)
+	dL_InputLayer := nns.NewDenseLayer( "Input Layer ", "tanh", makeDense[0], makeDense[1], nil, nil)
+	dLHidden      := nns.NewDenseLayer( "Hidden Layer ","tanh", makeDense[1], makeDense[2], nil, nil)
 	
 
 	//dL_InputLayer.input = input
