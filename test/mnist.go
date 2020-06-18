@@ -10,7 +10,7 @@ import (
 	"time"
 	"../nns"
 	"github.com/gonum/matrix/mat64"
-	
+	"gopkg.in/cheggaaa/pb.v1"
 )
 
 
@@ -44,7 +44,7 @@ func main()  {
 
 	num_samples    := inputs.Shape()[0]
 	target_sample  := targets.Shape()[0]
-	max_epochs := 30
+	max_epochs := 200
 	
 	batch_size := 1
 	
@@ -64,13 +64,26 @@ func main()  {
 	var mse_err, LearningRate float64
 	
 	makeDense := [3]int{28*28,80,10}
-	dL_InputLayer := nns.NewDenseLayer( "Input Layer ", "lrelu", makeDense[0], makeDense[1], nil, nil)
-	dLHidden      := nns.NewDenseLayer( "Hidden Layer ","lrelu", makeDense[1], makeDense[2], nil, nil)
+	dL_InputLayer := nns.NewDenseLayer( "Input Layer ", "relu", makeDense[0], makeDense[1], nil, nil)
+	dLHidden      := nns.NewDenseLayer( "Hidden Layer ","relu", makeDense[1], makeDense[2], nil, nil)
 	LearningRate   = 0.0001
+	
+	bar := pb.New(num_batches)
+	bar.SetRefreshRate(time.Second)
+	bar.SetMaxWidth(80)
+
+	fmt.Println(" MNIST sample size : ", num_samples, target_sample)
+	
+	nns.LogMlpLayer(&dL_InputLayer)
+	nns.LogMlpLayer(&dLHidden)
+	log.Printf("Learning rate : %f", LearningRate)
 	
 	for epoch := 0; epoch < max_epochs; epoch++ {
 	
-		t_start := time.Now()
+		bar.Prefix(fmt.Sprintf("Epoch %d", epoch))
+		bar.Set(0)
+		bar.Start()
+		
 		mse_err =0.0
 		accuracy=0
 		for b:= 0; b < num_batches; b++ {
@@ -137,29 +150,22 @@ func main()  {
 			acc, _ := nns.CheckAccuracy(y_mat64, yout_mat64)
 			accuracy +=acc
 			
-			if b%1000 == 0 {
-				
-				log.Printf("Mse error : %f, Samples : %d, epoc :%d: Accuracy : %f ", mse_err, end,epoch, 100*float64(accuracy)/float64(1000))
-				
-				//fmt.Println("expected:", y_mat64)
-				//fmt.Println("Achieved:", yout_mat64)
-				mse_err  =0.0
-				accuracy =0.0
-				
-				
-			}
-	
 
+			bar.Increment()
 		
 		}
 	
-		t_end := time.Now()
-		log.Printf("Epoch %d: Time taken : %s :  MSE err: %f", epoch,  t_end.Sub(t_start), mse_err)
+		accuracy_f :=100*float64(accuracy)/float64(num_batches*batch_size)
+		log.Printf("Epoch %d | cost %f | Accuracy %f", epoch, mse_err,accuracy_f)
+		accuracy =0
+		mse_err  =0.0
 	}
 	
 	
 	
 	end := time.Now()
+	//For clean log prints
+	time.Sleep(4 * time.Second)
 	
 	fmt.Println("Time taken : ", end.Sub(start))
 	fmt.Println(" MNIST sample size : ", num_samples, target_sample)
