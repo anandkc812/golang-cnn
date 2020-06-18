@@ -48,11 +48,11 @@ func ActivationReLU(x float64) float64 {
 // ActivationSygmoidDerivative is derivative of sigmoid
 func DActivationReLU(x float64) float64 {
 	
-	if( x > 0.0) {
-		return  1.0
+	if( x > 0.01) {
+		return  0.9999
 	} 	
 	
-	return 0.0
+	return 0.0001
 }
 
 
