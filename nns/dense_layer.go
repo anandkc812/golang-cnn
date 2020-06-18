@@ -70,24 +70,25 @@ func     NewDenseLayer(layername, actv string, NumInputs int , NumOutputs int, w
 	
 	if weights == nil {
 	
-		fmt.Println("Input weights null, fill with Random")
+		if Debug == 1 {	
+			fmt.Println("Input weights null, fill with Random")
+		}
 		fillRand(dlayer.weights)
 	
 	}
 	
 	if biases == nil {
-	
-		fmt.Println("Input Biases nill, fill with Random")
+
+		if Debug == 1 {	
+			fmt.Println("Input Biases nill, fill with Random")
+		}
 		fillRand(dlayer.biases)
 	
 	}
 	
 	
-	//dlayer.activationName= "lrelu"
-	
 	SetActivation(&dlayer, actv)
 
-	fmt.Println("After Set : ActivationFunc :", dlayer.ActivationFunc)
 	
 	return dlayer
 
@@ -103,13 +104,12 @@ func GetActivation(dlayer *denseLayer) string {
 func SetActivation(dlayer *denseLayer, actv string) {
 
 
-	fmt.Println("SetActivation  : ", actv)
+	//fmt.Println("SetActivation  : ", actv)
 	dlayer.activationName= actv
 	
 	switch actv {
 	
 	
-		//case "ReLU": //--TBD
 		case "relu":
 			
 			fmt.Println("Set Activation RELU")
@@ -124,14 +124,12 @@ func SetActivation(dlayer *denseLayer, actv string) {
 			dlayer.DActivationFunc  = DActivationLReLU
 			break
 				
-		//case "Tanh":
 		case "tanh":
 			fmt.Println("Set Activation Tanh")
 			dlayer.ActivationFunc   = ActivationTanh
 			dlayer.DActivationFunc  = DActivationTanh
 			break
 	
-		//case "Sigmoid":
 		case "sigmoid":
 			fmt.Println("Set Activation Sigmoid")
 			dlayer.ActivationFunc   = ActivationSigmoid
@@ -152,7 +150,6 @@ func SetInput(input *mat64.Dense, dlayer *denseLayer) (int, int) {
 	dlayer.input = input
 	
 	r,c := dlayer.input.Dims()
-	//fmt.Println("Input Dims :", r,c)
 	return r, c
 }
 
@@ -218,10 +215,7 @@ func fillRand( x *mat64.Dense) {
 	for i:=0; i < r; i++ {
 	
 		for j:=0; j < c; j++ {
-		
 			x.Set(i, j, rand.NormFloat64()/norm)
-			//fmt.Println(rand.NormFloat64())
-		
 		}
 	
 	}
@@ -237,8 +231,6 @@ func Backprop(  curr_layer, next_layer denseLayer) {
 	
 	tem_deltas.Mul(next_layer.weights, next_layer.deltas.T())
 
-	//curr_layer.deltas = tem_deltas.T()
-	
 	r3, c3 := tem_deltas.Dims()
 	r4, c4 := curr_layer.derivatives.Dims()
 
@@ -306,7 +298,7 @@ func Update(curr_layer denseLayer, lr float64) {
 	
 	
 	curr_layer.weights.Sub(curr_layer.weights, deltas.T())
-	
+
 
 }
 
